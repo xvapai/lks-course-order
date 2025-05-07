@@ -1,0 +1,16 @@
+{
+  "AWSEBDockerrunVersion": "1",
+  "Authentication": {
+    "Bucket": " lks-order-bucket-rifai",
+    "Key": "config.json"
+  },
+  "Image": {
+    "Name": "659925004097.dkr.ecr.us-east1.amazonaws.com/order:latest"
+  },
+  "Ports": [
+    {
+      "ContainerPort": 8000,
+      "HostPort": 80
+    }
+  ]
+}
