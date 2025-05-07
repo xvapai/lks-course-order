@@ -56,9 +56,9 @@ phases:
 
 reports:
   test-report:
-  files:
-    - 'report/test-result.xml'
-  file-format: JUNITXML
+    files:
+      - 'report/test-result.xml'
+    file-format: JUNITXML
     
 artifacts: 
   files:
