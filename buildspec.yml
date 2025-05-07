@@ -54,10 +54,10 @@ phases:
       - printf '[{"name":"%s","imageUri":"%s"}]' $CONTAINER_NAME ${ECR_REPO}/order:v1 > imagedefinitions.json
       - echo "Build complete."
 
-reports: 
+reports:
   test-report:
     files:
-      - 'report/test-result.xml' 
+      - 'report/test-result.xml'
     file-format: JUNITXML
     
 artifacts: 
