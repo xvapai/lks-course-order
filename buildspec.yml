@@ -1,0 +1,63 @@
+version: 0.2 
+
+env: 
+  variables: 
+    ECR_REPO: "659925004097.dkr.ecr.us-east-1.amazonaws.com" 
+    ECR_REGION: "us-east-1" 
+    CONTAINER_NAME: "lks-order-container" 
+    AWS_REGION: "us-east-1" 
+    AWS_DYNAMODB_TABLE_PROD: "lks-order-production" 
+    AWS_DYNAMODB_TABLE_TEST: "lks-order-testing"
+
+phases: 
+  install: 
+    runtime-versions: 
+      nodejs: 18 
+      docker: 20 
+    commands: 
+      - echo "Checking OS details..." 
+      - cat /etc/os-release || echo "OS info not found" 
+      - command -v apk || echo "APK not found!" 
+      - echo "Installing dependencies..." 
+      - apk add --no-cache docker-cli aws-cli 
+      - echo "Installing AWS Elastic Beanstalk CLI..." 
+      - python3 -m venv ebcli-venv 
+      - source ebcli-venv/bin/activate 
+      - pip install --upgrade pip 
+      - pip install awsebcli 
+      - echo "Retrieving AWS credentials from SSM Parameter Store..." 
+      - export AWS_ACCESS_KEY=$(aws ssm get-parameter --name "/course-order/AWS_ACCESS_KEY" --with-decryption --query "Parameter.Value" --output text) 
+      - export AWS_SECRET_KEY=$(aws ssm get-parameter --name "/course-order/AWS_SECRET_KEY" --with-decryption --query "Parameter.Value" --output text) 
+      - echo "Testing and Debugging" 
+      - env 
+      - aws dynamodb list-tables --region us-east-1 
+ 
+  pre_build: 
+    commands: 
+      - echo "Logging into Amazon ECR..." 
+      - aws ecr get-login-password --region $ECR_REGION | docker login --username AWS --password-stdin $ECR_REPO 
+ 
+  build: 
+    commands: 
+      - echo "Running unit tests..." 
+      - export NODE_ENV="development" 
+      - npm install 
+      - npm run test --verbose 
+      - echo "Building Docker image..." 
+      - export NODE_ENV="production" 
+      - docker build --build-arg AWS_ACCESS_KEY=$AWS_ACCESS_KEY --build-arg AWS_SECRET_KEY=$AWS_SECRET_KEY -t ${ECR_REPO}/order:v1 .
+
+  post_build:
+    commands:
+      - echo "Pushing Docker image to ECR..."
+      - docker push ${ECR_REPO}/order:v1
+      - printf '[{"name":"%s","imageUri":"%s"}]' $CONTAINER_NAME ${ECR_REPO}/order:v1 > imagedefinitions.json
+      - echo "Build complete."
+
+reports: 
+  test-report:
+    files: - 'report/test-result.xml' 
+    file-format: JUNITXML
+    
+artifacts: 
+  files: - imagedefinitions.json
