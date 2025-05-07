@@ -57,9 +57,9 @@ phases:
 reports: 
   test-report:
     files:
-    - 'report/test-result.xml' 
+      - 'report/test-result.xml' 
     file-format: JUNITXML
     
 artifacts: 
   files:
-  - imagedefinitions.json
+    - imagedefinitions.json
